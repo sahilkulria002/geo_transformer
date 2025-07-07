@@ -19,30 +19,31 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/SetOrigin.srv"
   "srv/FromLL.srv"
   "srv/ToLL.srv"
+  "srv/GetOrigin.srv"
 )
 
 ament_export_dependencies(rosidl_default_runtime)
 
 # --- Executables ---
-add_executable(set_origin_node src/set_origin_node.cpp)
+add_executable(geo_transformer_node src/set_origin_node.cpp)
 
-target_include_directories(set_origin_node PUBLIC
+target_include_directories(geo_transformer_node PUBLIC
   ${GEOGRAPHICLIB_INCLUDE_DIRS}
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
 )
 
-ament_target_dependencies(set_origin_node
+ament_target_dependencies(geo_transformer_node
   rclcpp
   std_msgs
 )
 
-target_link_libraries(set_origin_node ${GEOGRAPHICLIB_LIBRARIES})
+target_link_libraries(geo_transformer_node ${GEOGRAPHICLIB_LIBRARIES})
 
-rosidl_target_interfaces(set_origin_node
+rosidl_target_interfaces(geo_transformer_node
   ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
-install(TARGETS set_origin_node
+install(TARGETS geo_transformer_node
   DESTINATION lib/${PROJECT_NAME}
 )
 

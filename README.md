@@ -22,23 +22,39 @@ This package provides ROS 2 services for transforming geodetic coordinates (lati
    ```
 
 ## Running the Node
-To run the main node (e.g., `set_origin_node`):
+To run the main node:
 ```bash
-ros2 run geo_transformer set_origin_node
+ros2 run geo_transformer geo_transformer_node
 ```
 
 ## Calling the Services
 
+
 ### 1. Set the Origin
 You must set the origin before using the other services:
 ```bash
-ros2 service call /set_origin geo_transformer/srv/SetOrigin "{latitude: 40.6892, longitude: -74.0445, altitude: 0.0}"
+ros2 service call /local_coordinate/set geo_transformer/srv/SetOrigin "{latitude: 40.6892, longitude: -74.0445, altitude: 0.0}"
 ```
 Example output:
 ```
 success: true
 message: "Origin set to: 40.689200, -74.044500, 0.000000"
 ```
+
+### 1b. Get the Origin
+You can get the current origin:
+```bash
+ros2 service call /local_coordinate/get geo_transformer/srv/GetOrigin "{}"
+```
+Example output:
+```
+latitude: 40.6892
+longitude: -74.0445
+altitude: 0.0
+success: true
+message: "Origin retrieved successfully."
+```
+
 
 ### 2. FromLL Service (Geodetic to Local)
 Convert latitude, longitude, altitude to x, y, z:
@@ -53,6 +69,7 @@ z: 10.0
 success: true
 message: "Transformation successful."
 ```
+
 
 ### 3. ToLL Service (Local to Geodetic)
 Convert x, y, z to latitude, longitude, altitude:
@@ -79,4 +96,5 @@ message: "Transformation successful."
   ros2 interface show geo_transformer/srv/FromLL
   ros2 interface show geo_transformer/srv/ToLL
   ros2 interface show geo_transformer/srv/SetOrigin
+  ros2 interface show geo_transformer/srv/GetOrigin
   ```

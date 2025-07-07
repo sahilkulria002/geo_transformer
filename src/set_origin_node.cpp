@@ -1,6 +1,7 @@
 #include "geo_transformer/srv/set_origin.hpp"
 #include "geo_transformer/srv/from_ll.hpp"
 #include "geo_transformer/srv/to_ll.hpp"
+#include "geo_transformer/srv/get_origin.hpp"
 #include <rclcpp/rclcpp.hpp>
 #include <GeographicLib/LocalCartesian.hpp>
 #include <memory>
@@ -8,19 +9,39 @@
 
 class SetOriginNode : public rclcpp::Node {
 public:
-  SetOriginNode() : Node("set_origin_node"), origin_set_(false), origin_lat_(0.0), origin_lon_(0.0), origin_alt_(0.0) {
+  SetOriginNode() : Node("geo_transformer_node"), origin_set_(false), origin_lat_(0.0), origin_lon_(0.0), origin_alt_(0.0) {
     set_origin_service_ = this->create_service<geo_transformer::srv::SetOrigin>(
-      "set_origin",
+      "/local_coordinate/set",
       std::bind(&SetOriginNode::handle_set_origin, this, std::placeholders::_1, std::placeholders::_2)
     );
+    get_origin_service_ = this->create_service<geo_transformer::srv::GetOrigin>(
+      "/local_coordinate/get",
+      std::bind(&SetOriginNode::handle_get_origin, this, std::placeholders::_1, std::placeholders::_2)
+    );
     from_ll_service_ = this->create_service<geo_transformer::srv::FromLL>(
-      "from_ll",
+      "/from_ll",
       std::bind(&SetOriginNode::handle_from_ll, this, std::placeholders::_1, std::placeholders::_2)
     );
     to_ll_service_ = this->create_service<geo_transformer::srv::ToLL>(
-      "to_ll",
+      "/to_ll",
       std::bind(&SetOriginNode::handle_to_ll, this, std::placeholders::_1, std::placeholders::_2)
     );
+  }
+  void handle_get_origin(const std::shared_ptr<geo_transformer::srv::GetOrigin::Request> /*request*/,
+                        std::shared_ptr<geo_transformer::srv::GetOrigin::Response> response) {
+    if (!origin_set_) {
+      response->success = false;
+      response->message = "Origin not set.";
+      response->latitude = 0.0;
+      response->longitude = 0.0;
+      response->altitude = 0.0;
+      return;
+    }
+    response->latitude = origin_lat_;
+    response->longitude = origin_lon_;
+    response->altitude = origin_alt_;
+    response->success = true;
+    response->message = "Origin retrieved successfully.";
   }
   void handle_to_ll(const std::shared_ptr<geo_transformer::srv::ToLL::Request> request,
                     std::shared_ptr<geo_transformer::srv::ToLL::Response> response) {
@@ -78,6 +99,7 @@ private:
   }
 
   rclcpp::Service<geo_transformer::srv::SetOrigin>::SharedPtr set_origin_service_;
+  rclcpp::Service<geo_transformer::srv::GetOrigin>::SharedPtr get_origin_service_;
   rclcpp::Service<geo_transformer::srv::FromLL>::SharedPtr from_ll_service_;
   rclcpp::Service<geo_transformer::srv::ToLL>::SharedPtr to_ll_service_;
   bool origin_set_;
