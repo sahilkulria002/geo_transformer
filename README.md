@@ -6,6 +6,11 @@ This package provides ROS 2 services for transforming geodetic coordinates (lati
 ## Prerequisites
 - ROS 2 (e.g., Foxy, Galactic, Humble, etc.) installed and sourced
 - Colcon build system
+- Python 3 (for test scripts)
+- Python dependencies for test scripts:
+  ```bash
+  pip install -r scripts/requirements.txt
+  ```
 
 ## Building the Package
 1. Open a terminal and navigate to the workspace root:

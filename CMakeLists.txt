@@ -57,3 +57,15 @@ if(BUILD_TESTING)
 endif()
 
 ament_package()
+
+
+# Install launch file
+install(DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME}/
+)
+
+# Install test script
+install(PROGRAMS
+  scripts/test_services.py
+  DESTINATION lib/${PROJECT_NAME}
+)
