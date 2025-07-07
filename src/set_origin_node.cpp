@@ -1,5 +1,6 @@
 #include "geo_transformer/srv/set_origin.hpp"
 #include "geo_transformer/srv/from_ll.hpp"
+#include "geo_transformer/srv/to_ll.hpp"
 #include <rclcpp/rclcpp.hpp>
 #include <GeographicLib/LocalCartesian.hpp>
 #include <memory>
@@ -16,6 +17,30 @@ public:
       "from_ll",
       std::bind(&SetOriginNode::handle_from_ll, this, std::placeholders::_1, std::placeholders::_2)
     );
+    to_ll_service_ = this->create_service<geo_transformer::srv::ToLL>(
+      "to_ll",
+      std::bind(&SetOriginNode::handle_to_ll, this, std::placeholders::_1, std::placeholders::_2)
+    );
+  }
+  void handle_to_ll(const std::shared_ptr<geo_transformer::srv::ToLL::Request> request,
+                    std::shared_ptr<geo_transformer::srv::ToLL::Response> response) {
+    if (!origin_set_ || !local_cartesian_) {
+      response->success = false;
+      response->message = "Origin not set. Please call set_origin first.";
+      return;
+    }
+    double lat, lon, alt;
+    try {
+      local_cartesian_->Reverse(request->x, request->y, request->z, lat, lon, alt);
+      response->latitude = lat;
+      response->longitude = lon;
+      response->altitude = alt;
+      response->success = true;
+      response->message = "Transformation successful.";
+    } catch (const std::exception &e) {
+      response->success = false;
+      response->message = std::string("Transformation failed: ") + e.what();
+    }
   }
 
 private:
@@ -54,6 +79,7 @@ private:
 
   rclcpp::Service<geo_transformer::srv::SetOrigin>::SharedPtr set_origin_service_;
   rclcpp::Service<geo_transformer::srv::FromLL>::SharedPtr from_ll_service_;
+  rclcpp::Service<geo_transformer::srv::ToLL>::SharedPtr to_ll_service_;
   bool origin_set_;
   double origin_lat_, origin_lon_, origin_alt_;
   std::unique_ptr<GeographicLib::LocalCartesian> local_cartesian_;

@@ -27,36 +27,56 @@ To run the main node (e.g., `set_origin_node`):
 ros2 run geo_transformer set_origin_node
 ```
 
-## Calling the Service
-Assuming you want to call the `FromLL` service (convert latitude, longitude, altitude to x, y, z):
+## Calling the Services
 
-1. In a new terminal, source your workspace:
-   ```bash
-   cd /home/sahil/Desktop/The_assignment/asg_ws
-   source install/setup.bash
-   ```
-2. Call the service using `ros2 service call`:
-   ```bash
-   ros2 service call /from_ll geo_transformer/srv/FromLL "{latitude: 12.34, longitude: 56.78, altitude: 100.0}"
-   ```
-   Replace the values with your desired coordinates.
-
-## Example Output
+### 1. Set the Origin
+You must set the origin before using the other services:
+```bash
+ros2 service call /set_origin geo_transformer/srv/SetOrigin "{latitude: 40.6892, longitude: -74.0445, altitude: 0.0}"
 ```
-x: 123.45
-y: 678.90
-z: 50.0
+Example output:
+```
+success: true
+message: "Origin set to: 40.689200, -74.044500, 0.000000"
+```
+
+### 2. FromLL Service (Geodetic to Local)
+Convert latitude, longitude, altitude to x, y, z:
+```bash
+ros2 service call /from_ll geo_transformer/srv/FromLL "{latitude: 40.6900, longitude: -74.0450, altitude: 10.0}"
+```
+Example output:
+```
+x: 70.5
+y: -89.1
+z: 10.0
+success: true
+message: "Transformation successful."
+```
+
+### 3. ToLL Service (Local to Geodetic)
+Convert x, y, z to latitude, longitude, altitude:
+```bash
+ros2 service call /to_ll geo_transformer/srv/ToLL "{x: 70.5, y: -89.1, z: 10.0}"
+```
+Example output:
+```
+latitude: 40.6900
+longitude: -74.0450
+altitude: 10.0
 success: true
 message: "Transformation successful."
 ```
 
 ## Notes
-- Make sure the node is running before calling the service.
+- Make sure the node is running before calling the services.
 - You can check available services with:
   ```bash
   ros2 service list
   ```
-- You can inspect the service type with:
+- You can inspect the service types with:
   ```bash
   ros2 interface show geo_transformer/srv/FromLL
+  ros2 interface show geo_transformer/srv/ToLL
+  ros2 interface show geo_transformer/srv/SetOrigin
   ```
