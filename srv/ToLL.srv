@@ -1,9 +1,12 @@
-float64 x
-float64 y
-float64 z
+
+# Request: Convert local coordinates to WGS84
+float64 x          # X in meters
+float64 y          # Y in meters
+float64 z          # Z in meters
 ---
-float64 latitude
-float64 longitude
-float64 altitude
-bool success
-string message
+# Response: WGS84 coordinates
+float64 latitude   # Latitude in degrees
+float64 longitude  # Longitude in degrees
+float64 altitude   # Altitude in meters
+bool success       # True if conversion succeeded
+string message     # Status or error message

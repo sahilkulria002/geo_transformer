@@ -25,7 +25,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 ament_export_dependencies(rosidl_default_runtime)
 
 # --- Executables ---
-add_executable(geo_transformer_node src/set_origin_node.cpp)
+add_executable(geo_transformer_node src/geo_transformation_node.cpp)
 
 target_include_directories(geo_transformer_node PUBLIC
   ${GEOGRAPHICLIB_INCLUDE_DIRS}
@@ -42,6 +42,7 @@ target_link_libraries(geo_transformer_node ${GEOGRAPHICLIB_LIBRARIES})
 
 rosidl_target_interfaces(geo_transformer_node
   ${PROJECT_NAME} "rosidl_typesupport_cpp")
+
 
 install(TARGETS geo_transformer_node
   DESTINATION lib/${PROJECT_NAME}

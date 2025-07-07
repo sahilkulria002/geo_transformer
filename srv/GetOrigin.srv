@@ -1,6 +1,9 @@
+
+# Request: Empty (just call to get the current origin)
 ---
-float64 latitude
-float64 longitude
-float64 altitude
-bool success
-string message
+# Response: Current origin of the local coordinate frame (WGS84)
+float64 latitude   # Latitude in degrees
+float64 longitude  # Longitude in degrees
+float64 altitude   # Altitude in meters
+bool success       # True if origin is set
+string message     # Status or error message
