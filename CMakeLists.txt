@@ -17,6 +17,7 @@ pkg_check_modules(GEOGRAPHICLIB REQUIRED geographiclib)
 # --- Generate custom services ---
 rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/SetOrigin.srv"
+  "srv/FromLL.srv"
 )
 
 ament_export_dependencies(rosidl_default_runtime)
