@@ -1,0 +1,17 @@
+# Ignore ROS2 build-related stuff (if accidentally created inside the package)
+build/
+install/
+log/
+
+# General ignores
+*.pyc
+__pycache__/
+*.swp
+*.DS_Store
+.colcon/
+
+# CMake temp
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
