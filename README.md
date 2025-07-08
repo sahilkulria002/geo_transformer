@@ -138,6 +138,32 @@ altitude: 10.0
 success: true
 message: "Transformation successful."
 ```
+## ################################################
+## Advanced: Named Origin Management
+
+The following additional services allow you to manage and switch between multiple named origins, without affecting the default single-origin workflow:
+
+### 1. Add a Named Origin
+```bash
+ros2 service call /origin_store/add_named_origin geo_transformer/srv/AddNamedOrigin '{name: "my_origin", latitude: 28.6139, longitude: 77.2090, altitude: 0.0}'
+```
+
+### 2. Switch to a Named Origin
+```bash
+ros2 service call /origin_store/switch_origin geo_transformer/srv/SwitchOrigin '{name: "my_origin"}'
+```
+
+### 3. List All Named Origins
+```bash
+ros2 service call /origin_store/list_origins geo_transformer/srv/ListOrigins '{}'
+```
+
+### 4. Get Current Origin Name
+```bash
+ros2 service call /origin_store/get_current_origin_name geo_transformer/srv/GetCurrentOriginName '{}'
+```
+
+---
 
 ## Notes
 - Make sure the node is running before calling the services.
@@ -151,4 +177,8 @@ message: "Transformation successful."
   ros2 interface show geo_transformer/srv/ToLL
   ros2 interface show geo_transformer/srv/SetOrigin
   ros2 interface show geo_transformer/srv/GetOrigin
+  ros2 interface show geo_transformer/srv/AddNamedOrigin
+  ros2 interface show geo_transformer/srv/SwitchOrigin
+  ros2 interface show geo_transformer/srv/ListOrigins
+  ros2 interface show geo_transformer/srv/GetCurrentOriginName
   ```

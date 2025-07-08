@@ -1,0 +1,3 @@
+# List all stored origin names
+---
+string[] names

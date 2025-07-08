@@ -20,6 +20,10 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/FromLL.srv"
   "srv/ToLL.srv"
   "srv/GetOrigin.srv"
+  "srv/AddNamedOrigin.srv"
+  "srv/SwitchOrigin.srv"
+  "srv/ListOrigins.srv"
+  "srv/GetCurrentOriginName.srv"
 )
 
 ament_export_dependencies(rosidl_default_runtime)
