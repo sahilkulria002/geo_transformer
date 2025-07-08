@@ -56,6 +56,34 @@ class ServiceTester(Node):
     def on_to_ll(self, future):
         res = future.result()
         print(f"[ToLL] lat={res.latitude}, lon={res.longitude}, alt={res.altitude}")
+
+        # Round-trip check: compare input test_point with output from ToLL
+        import math
+        lat1, lon1, alt1 = self.test_point
+        lat2, lon2, alt2 = res.latitude, res.longitude, res.altitude
+
+        # Compute differences
+        dlat = abs(lat1 - lat2)
+        dlon = abs(lon1 - lon2)
+        dalt = abs(alt1 - alt2)
+
+        # Haversine formula for distance in meters (ignoring altitude)
+        R = 6371000  # Earth radius in meters
+        phi1 = math.radians(lat1)
+        phi2 = math.radians(lat2)
+        dphi = math.radians(lat2 - lat1)
+        dlambda = math.radians(lon2 - lon1)
+        a = math.sin(dphi/2)**2 + math.cos(phi1)*math.cos(phi2)*math.sin(dlambda/2)**2
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+        horizontal_error = R * c
+        vertical_error = dalt
+
+        print(f"[RoundTrip] Horizontal error: {horizontal_error:.6f} m, Vertical error: {vertical_error:.6f} m")
+        # Optionally, assert or warn if error is too large
+        if horizontal_error < 1.0 and vertical_error < 0.1:
+            print("[RoundTrip] ✅ Transformation is accurate (within 1 meter, 0.1m altitude)")
+        else:
+            print("[RoundTrip] ❌ Transformation error is too large!")
         rclpy.shutdown()
 
 
