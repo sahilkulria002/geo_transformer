@@ -74,6 +74,21 @@ private:
   // Handler for /local_coordinate/set service: sets the local frame origin
   void handle_set_origin(const std::shared_ptr<geo_transformer::srv::SetOrigin::Request> request,
                         std::shared_ptr<geo_transformer::srv::SetOrigin::Response> response) {
+    // Check latitude and longitude bounds
+    if (request->latitude < -90.0 || request->latitude > 90.0) {
+      response->success = false;
+      response->message = "Latitude must be in [-90, 90] degrees.";
+      return;
+    }
+    if (request->longitude < -180.0 || request->longitude > 180.0) {
+      response->success = false;
+      response->message = "Longitude must be in [-180, 180] degrees.";
+      return;
+    }
+    // Altitude: allow any value, but warn if extreme
+    if (request->altitude < -500.0 || request->altitude > 10000.0) {
+      RCLCPP_WARN(this->get_logger(), "Unusual altitude: %f meters", request->altitude);
+    }
     origin_lat_ = request->latitude;
     origin_lon_ = request->longitude;
     origin_alt_ = request->altitude;
@@ -92,6 +107,20 @@ private:
       response->success = false;
       response->message = "Origin not set. Please call set_origin first.";
       return;
+    }
+    // Check latitude and longitude bounds
+    if (request->latitude < -90.0 || request->latitude > 90.0) {
+      response->success = false;
+      response->message = "Latitude must be in [-90, 90] degrees.";
+      return;
+    }
+    if (request->longitude < -180.0 || request->longitude > 180.0) {
+      response->success = false;
+      response->message = "Longitude must be in [-180, 180] degrees.";
+      return;
+    }
+    if (request->altitude < -500.0 || request->altitude > 10000.0) {
+      RCLCPP_WARN(this->get_logger(), "Unusual altitude: %f meters", request->altitude);
     }
     double x, y, z;
     try {
