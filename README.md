@@ -18,7 +18,7 @@ This package uses [GeographicLib](https://geographiclib.sourceforge.io/) for geo
 ## Building the Package (Terminal 1)
 1. Open **Terminal 1** and navigate to the workspace root:
    ```bash
-   cd /home/sahil/Desktop/The_assignment/asg_ws
+   cd /home/asg_ws
    ```
 2. Build the workspace (this will compile all C++ and generate Python interfaces):
    ```bash
@@ -37,7 +37,7 @@ You can run the node using either a launch file or directly:
 ### Option 1: Using the launch file (recommended)
 Open **Terminal 2**:
 ```bash
-cd /home/sahil/Desktop/The_assignment/asg_ws
+cd /home/asg_ws
 source install/setup.bash
 ros2 launch geo_transformer geo_transformer.launch.py
 ```
@@ -45,7 +45,7 @@ ros2 launch geo_transformer geo_transformer.launch.py
 ### Option 2: Run the node directly
 Open **Terminal 2**:
 ```bash
-cd /home/sahil/Desktop/The_assignment/asg_ws
+cd /home/asg_ws
 source install/setup.bash
 ros2 run geo_transformer geo_transformer_node
 ```
