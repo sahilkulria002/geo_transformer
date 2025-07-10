@@ -7,36 +7,36 @@
 #include <memory>
 #include <limits>
 
-class GeoTransformationNode : public rclcpp::Node {
+class GeoTransformerNode : public rclcpp::Node {
 public:
-  GeoTransformationNode()
+  GeoTransformerNode()
   : Node("geo_transformer_node"),
     origin_set_(false),
     origin_lat_(std::numeric_limits<double>::quiet_NaN()),
     origin_lon_(std::numeric_limits<double>::quiet_NaN()),
     origin_alt_(0.0)
   {
-    RCLCPP_INFO(this->get_logger(), "GeoTransformationNode started.");
+    RCLCPP_INFO(this->get_logger(), "GeoTransformerNode started.");
 
     // Advertise services
     set_origin_service_ = create_service<geo_transformer::srv::SetOrigin>(
       "/local_coordinate/set",
-      std::bind(&GeoTransformationNode::handle_set_origin, this, std::placeholders::_1, std::placeholders::_2)
+      std::bind(&GeoTransformerNode::handle_set_origin, this, std::placeholders::_1, std::placeholders::_2)
     );
 
     get_origin_service_ = create_service<geo_transformer::srv::GetOrigin>(
       "/local_coordinate/get",
-      std::bind(&GeoTransformationNode::handle_get_origin, this, std::placeholders::_1, std::placeholders::_2)
+      std::bind(&GeoTransformerNode::handle_get_origin, this, std::placeholders::_1, std::placeholders::_2)
     );
 
     from_ll_service_ = create_service<geo_transformer::srv::FromLL>(
       "/from_ll",
-      std::bind(&GeoTransformationNode::handle_from_ll, this, std::placeholders::_1, std::placeholders::_2)
+      std::bind(&GeoTransformerNode::handle_from_ll, this, std::placeholders::_1, std::placeholders::_2)
     );
 
     to_ll_service_ = create_service<geo_transformer::srv::ToLL>(
       "/to_ll",
-      std::bind(&GeoTransformationNode::handle_to_ll, this, std::placeholders::_1, std::placeholders::_2)
+      std::bind(&GeoTransformerNode::handle_to_ll, this, std::placeholders::_1, std::placeholders::_2)
     );
   }
 
@@ -182,7 +182,7 @@ private:
 int main(int argc, char **argv)
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<GeoTransformationNode>());
+  rclcpp::spin(std::make_shared<GeoTransformerNode>());
   rclcpp::shutdown();
   return 0;
 }
