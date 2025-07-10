@@ -113,30 +113,52 @@ success: true
 message: "Origin retrieved successfully."
 ```
 
-### 3. FromLL Service (Geodetic to Local)
+### 3. FromLL Service (Geodetic to Local, Batch Supported)
 ```bash
-ros2 service call /from_ll geo_transformer/srv/FromLL "{latitude: 40.6900, longitude: -74.0450, altitude: 10.0}"
+# Single point (must use arrays):
+ros2 service call /from_ll geo_transformer/srv/FromLL "{latitude: [40.6900], longitude: [-74.0450], altitude: [10.0]}"
+# Batch (multiple points):
+ros2 service call /from_ll geo_transformer/srv/FromLL "{latitude: [40.6900, 40.6910], longitude: [-74.0450, -74.0460], altitude: [10.0, 20.0]}"
 ```
-Example output:
+Example output (single point):
 ```
-x: 70.5
-y: -89.1
-z: 10.0
+x: [70.5]
+y: [-89.1]
+z: [10.0]
 success: true
-message: "Transformation successful."
+message: "All transformations successful. | Origin name: 'my_origin', lat: 40.6892, lon: -74.0445, alt: 0.0"
+```
+Example output (batch):
+```
+x: [70.5, 160.2]
+y: [-89.1, -179.3]
+z: [10.0, 20.0]
+success: true
+message: "All transformations successful. | Origin name: 'my_origin', lat: 40.6892, lon: -74.0445, alt: 0.0"
 ```
 
-### 4. ToLL Service (Local to Geodetic)
+### 4. ToLL Service (Local to Geodetic, Batch Supported)
 ```bash
-ros2 service call /to_ll geo_transformer/srv/ToLL "{x: 70.5, y: -89.1, z: 10.0}"
+# Single point (must use arrays):
+ros2 service call /to_ll geo_transformer/srv/ToLL "{x: [70.5], y: [-89.1], z: [10.0]}"
+# Batch (multiple points):
+ros2 service call /to_ll geo_transformer/srv/ToLL "{x: [70.5, 160.2], y: [-89.1, -179.3], z: [10.0, 20.0]}"
 ```
-Example output:
+Example output (single point):
 ```
-latitude: 40.6900
-longitude: -74.0450
-altitude: 10.0
+latitude: [40.6900]
+longitude: [-74.0450]
+altitude: [10.0]
 success: true
-message: "Transformation successful."
+message: "All transformations successful. | Origin name: 'my_origin', lat: 40.6892, lon: -74.0445, alt: 0.0"
+```
+Example output (batch):
+```
+latitude: [40.6900, 40.6910]
+longitude: [-74.0450, -74.0460]
+altitude: [10.0, 20.0]
+success: true
+message: "All transformations successful. | Origin name: 'my_origin', lat: 40.6892, lon: -74.0445, alt: 0.0"
 ```
 ## ################################################
 ## Advanced: Named Origin Management
