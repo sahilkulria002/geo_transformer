@@ -116,49 +116,50 @@ message: "Origin retrieved successfully."
 ### 3. FromLL Service (Geodetic to Local, Batch Supported)
 ```bash
 # Single point (must use arrays):
-ros2 service call /from_ll geo_transformer/srv/FromLL "{latitude: [40.6900], longitude: [-74.0450], altitude: [10.0]}"
-# Batch (multiple points):
-ros2 service call /from_ll geo_transformer/srv/FromLL "{latitude: [40.6900, 40.6910], longitude: [-74.0450, -74.0460], altitude: [10.0, 20.0]}"
+ros2 service call /from_ll geo_transformer/srv/FromLL "{latitude: [28.6139], longitude: [77.20900898], altitude: [0.0]}"
+# Batch (multiple points, ~1m apart in x, y, z):
+ros2 service call /from_ll geo_transformer/srv/FromLL "{latitude: [28.6139, 28.61390898, 28.6139], longitude: [77.20900898, 77.2090, 77.2090], altitude: [0.0, 0.0, 1.0]}"
 ```
-Example output (single point):
+
+Example output (single point, ~1m east of origin):
 ```
-x: [70.5]
-y: [-89.1]
-z: [10.0]
+x: [1.0001]
+y: [0.0]
+z: [0.0]
 success: true
-message: "All transformations successful. | Origin name: 'my_origin', lat: 40.6892, lon: -74.0445, alt: 0.0"
+message: "All transformations successful. | Origin name: 'my_origin', lat: 28.6139, lon: 77.2090, alt: 0.0"
 ```
-Example output (batch):
+Example output (batch, points ~1m apart in x, y, z):
 ```
-x: [70.5, 160.2]
-y: [-89.1, -179.3]
-z: [10.0, 20.0]
+x: [1.0001, 0.0, 0.0]
+y: [0.0, 1.0001, 0.0]
+z: [0.0, 0.0, 1.0]
 success: true
-message: "All transformations successful. | Origin name: 'my_origin', lat: 40.6892, lon: -74.0445, alt: 0.0"
+message: "All transformations successful. | Origin name: 'my_origin', lat: 28.6139, lon: 77.2090, alt: 0.0"
 ```
 
 ### 4. ToLL Service (Local to Geodetic, Batch Supported)
 ```bash
 # Single point (must use arrays):
-ros2 service call /to_ll geo_transformer/srv/ToLL "{x: [70.5], y: [-89.1], z: [10.0]}"
+ros2 service call /to_ll geo_transformer/srv/ToLL "{x: [1.0], y: [0.0], z: [0.0]}"
 # Batch (multiple points):
-ros2 service call /to_ll geo_transformer/srv/ToLL "{x: [70.5, 160.2], y: [-89.1, -179.3], z: [10.0, 20.0]}"
+ros2 service call /to_ll geo_transformer/srv/ToLL "{x: [1.0, 0.0, 0.0], y: [0.0, 1.0, 0.0], z: [0.0, 0.0, 1.0]}"
 ```
 Example output (single point):
 ```
-latitude: [40.6900]
-longitude: [-74.0450]
-altitude: [10.0]
+latitude: [28.6139]
+longitude: [77.20900898]
+altitude: [0.0]
 success: true
-message: "All transformations successful. | Origin name: 'my_origin', lat: 40.6892, lon: -74.0445, alt: 0.0"
+message: "All transformations successful. | Origin name: 'my_origin', lat: 28.6139, lon: 77.2090, alt: 0.0"
 ```
 Example output (batch):
 ```
-latitude: [40.6900, 40.6910]
-longitude: [-74.0450, -74.0460]
-altitude: [10.0, 20.0]
+latitude: [28.6139, 28.61390898, 28.6139]
+longitude: [77.20900898, 77.2090, 77.2090]
+altitude: [0.0, 0.0, 1.0]
 success: true
-message: "All transformations successful. | Origin name: 'my_origin', lat: 40.6892, lon: -74.0445, alt: 0.0"
+message: "All transformations successful. | Origin name: 'my_origin', lat: 28.6139, lon: 77.2090, alt: 0.0"
 ```
 ## ################################################
 ## Advanced: Named Origin Management
@@ -186,6 +187,36 @@ ros2 service call /origin_store/get_current_origin_name geo_transformer/srv/GetC
 ```
 
 ---
+
+## Visualization and Node Graph
+
+### Visualizing Transformed Points and Origin in RViz
+
+You can visualize the transformed points and the origin in RViz using the provided Python visualization node:
+
+1. **Start the visualization node:**
+   ```bash
+   python3 geo_transformer/scripts/visualize_points.py
+   ```
+2. **Start RViz:**
+   ```bash
+   rviz2
+   ```
+3. **In RViz:**
+   - Set the Fixed Frame to `odom`.
+   - Add a `MarkerArray` display and set the topic to `/geo_transformer/markers`.
+   - Add a `Grid` and `Axes` display for reference.
+   - Use the selection tool to inspect marker coordinates.
+
+The origin will appear as a red sphere labeled "Origin". Transformed points will appear as green spheres with labels (P0, P1, ...), spaced ~1m apart in x, y, z from the origin.
+
+### Node Graph
+
+To see the ROS 2 node and topic graph, run:
+```bash
+ros2 run rqt_graph rqt_graph
+```
+This will show all nodes and their topic connections, including services and publishers/subscribers.
 
 ## Notes
 - Make sure the node is running before calling the services.
