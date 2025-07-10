@@ -5,150 +5,182 @@
 #include <rclcpp/rclcpp.hpp>
 #include <GeographicLib/LocalCartesian.hpp>
 #include <memory>
+#include <limits>
 
-// Main node class for coordinate transformation services
 class GeoTransformationNode : public rclcpp::Node {
 public:
-  GeoTransformationNode() : Node("geo_transformer_node"), origin_set_(false), origin_lat_(0.0), origin_lon_(0.0), origin_alt_(0.0) {
-    // Advertise the /local_coordinate/set service
-    set_origin_service_ = this->create_service<geo_transformer::srv::SetOrigin>(
+  GeoTransformationNode()
+  : Node("geo_transformer_node"),
+    origin_set_(false),
+    origin_lat_(std::numeric_limits<double>::quiet_NaN()),
+    origin_lon_(std::numeric_limits<double>::quiet_NaN()),
+    origin_alt_(0.0)
+  {
+    RCLCPP_INFO(this->get_logger(), "GeoTransformationNode started.");
+
+    // Advertise services
+    set_origin_service_ = create_service<geo_transformer::srv::SetOrigin>(
       "/local_coordinate/set",
       std::bind(&GeoTransformationNode::handle_set_origin, this, std::placeholders::_1, std::placeholders::_2)
     );
-    // Advertise the /local_coordinate/get service
-    get_origin_service_ = this->create_service<geo_transformer::srv::GetOrigin>(
+
+    get_origin_service_ = create_service<geo_transformer::srv::GetOrigin>(
       "/local_coordinate/get",
       std::bind(&GeoTransformationNode::handle_get_origin, this, std::placeholders::_1, std::placeholders::_2)
     );
-    // Advertise the /from_ll service
-    from_ll_service_ = this->create_service<geo_transformer::srv::FromLL>(
+
+    from_ll_service_ = create_service<geo_transformer::srv::FromLL>(
       "/from_ll",
       std::bind(&GeoTransformationNode::handle_from_ll, this, std::placeholders::_1, std::placeholders::_2)
     );
-    // Advertise the /to_ll service
-    to_ll_service_ = this->create_service<geo_transformer::srv::ToLL>(
+
+    to_ll_service_ = create_service<geo_transformer::srv::ToLL>(
       "/to_ll",
       std::bind(&GeoTransformationNode::handle_to_ll, this, std::placeholders::_1, std::placeholders::_2)
     );
   }
-  // Handler for /local_coordinate/get service
-  void handle_get_origin(const std::shared_ptr<geo_transformer::srv::GetOrigin::Request> /*request*/,
-                        std::shared_ptr<geo_transformer::srv::GetOrigin::Response> response) {
-    if (!origin_set_) {
+
+private:
+  // === Set Origin ===
+  void handle_set_origin(
+    const std::shared_ptr<geo_transformer::srv::SetOrigin::Request> request,
+    std::shared_ptr<geo_transformer::srv::SetOrigin::Response> response)
+  {
+    // Validate latitude and longitude
+    if (request->latitude < -90.0 || request->latitude > 90.0) {
       response->success = false;
-      response->message = "Origin not set.";
-      response->latitude = 0.0;
-      response->longitude = 0.0;
-      response->altitude = 0.0;
+      response->message = "Invalid latitude. Must be in [-90, 90] degrees.";
       return;
     }
+    if (request->longitude < -180.0 || request->longitude > 180.0) {
+      response->success = false;
+      response->message = "Invalid longitude. Must be in [-180, 180] degrees.";
+      return;
+    }
+
+    if (request->altitude < -500.0 || request->altitude > 10000.0) {
+      RCLCPP_WARN(this->get_logger(), "Unusual altitude: %.2f meters", request->altitude);
+    }
+
+    // Set origin
+    origin_lat_ = request->latitude;
+    origin_lon_ = request->longitude;
+    origin_alt_ = request->altitude;
+    origin_set_ = true;
+
+    try {
+      local_cartesian_ = std::make_unique<GeographicLib::LocalCartesian>(
+        origin_lat_, origin_lon_, origin_alt_);
+    } catch (const std::exception &e) {
+      response->success = false;
+      response->message = std::string("GeographicLib error: ") + e.what();
+      return;
+    }
+
+    response->success = true;
+    response->message = "Origin set to (" + std::to_string(origin_lat_) + ", " +
+                        std::to_string(origin_lon_) + ", " +
+                        std::to_string(origin_alt_) + ")";
+    RCLCPP_INFO(this->get_logger(), "%s", response->message.c_str());
+  }
+
+  // === Get Origin ===
+  void handle_get_origin(
+    const std::shared_ptr<geo_transformer::srv::GetOrigin::Request> /*request*/,
+    std::shared_ptr<geo_transformer::srv::GetOrigin::Response> response)
+  {
+    if (!origin_set_) {
+      response->success = false;
+      response->message = "Origin not set. Call /local_coordinate/set first.";
+      response->latitude = std::numeric_limits<double>::quiet_NaN();
+      response->longitude = std::numeric_limits<double>::quiet_NaN();
+      response->altitude = std::numeric_limits<double>::quiet_NaN();
+      return;
+    }
+
     response->latitude = origin_lat_;
     response->longitude = origin_lon_;
     response->altitude = origin_alt_;
     response->success = true;
     response->message = "Origin retrieved successfully.";
   }
-  // Handler for /to_ll service: converts local (x, y, z) to WGS84 (lat, lon, alt)
-  void handle_to_ll(const std::shared_ptr<geo_transformer::srv::ToLL::Request> request,
-                    std::shared_ptr<geo_transformer::srv::ToLL::Response> response) {
+
+  // === WGS84 → Local ===
+  void handle_from_ll(
+    const std::shared_ptr<geo_transformer::srv::FromLL::Request> request,
+    std::shared_ptr<geo_transformer::srv::FromLL::Response> response)
+  {
     if (!origin_set_ || !local_cartesian_) {
       response->success = false;
-      response->message = "Origin not set. Please call set_origin first.";
+      response->message = "Origin not set. Cannot perform conversion.";
       return;
     }
-    double lat, lon, alt;
-    try {
-      local_cartesian_->Reverse(request->x, request->y, request->z, lat, lon, alt);
-      response->latitude = lat;
-      response->longitude = lon;
-      response->altitude = alt;
-      response->success = true;
-      response->message = "Transformation successful.";
-    } catch (const std::exception &e) {
-      response->success = false;
-      response->message = std::string("Transformation failed: ") + e.what();
-    }
-  }
 
-private:
-  // Handler for /local_coordinate/set service: sets the local frame origin
-  void handle_set_origin(const std::shared_ptr<geo_transformer::srv::SetOrigin::Request> request,
-                        std::shared_ptr<geo_transformer::srv::SetOrigin::Response> response) {
-    // Check latitude and longitude bounds
-    if (request->latitude < -90.0 || request->latitude > 90.0) {
+    if (request->latitude < -90.0 || request->latitude > 90.0 ||
+        request->longitude < -180.0 || request->longitude > 180.0)
+    {
       response->success = false;
-      response->message = "Latitude must be in [-90, 90] degrees.";
-      return;
-    }
-    if (request->longitude < -180.0 || request->longitude > 180.0) {
-      response->success = false;
-      response->message = "Longitude must be in [-180, 180] degrees.";
-      return;
-    }
-    // Altitude: allow any value, but warn if extreme
-    if (request->altitude < -500.0 || request->altitude > 10000.0) {
-      RCLCPP_WARN(this->get_logger(), "Unusual altitude: %f meters", request->altitude);
-    }
-    origin_lat_ = request->latitude;
-    origin_lon_ = request->longitude;
-    origin_alt_ = request->altitude;
-    origin_set_ = true;
-    // Initialize the GeographicLib LocalCartesian object with the new origin
-    local_cartesian_ = std::make_unique<GeographicLib::LocalCartesian>(origin_lat_, origin_lon_, origin_alt_);
-    response->success = true;
-    response->message = "Origin set to: " + std::to_string(origin_lat_) + ", " +
-      std::to_string(origin_lon_) + ", " + std::to_string(origin_alt_);
-  }
-
-  // Handler for /from_ll service: converts WGS84 (lat, lon, alt) to local (x, y, z)
-  void handle_from_ll(const std::shared_ptr<geo_transformer::srv::FromLL::Request> request,
-                      std::shared_ptr<geo_transformer::srv::FromLL::Response> response) {
-    if (!origin_set_ || !local_cartesian_) {
-      response->success = false;
-      response->message = "Origin not set. Please call set_origin first.";
-      return;
-    }
-    // Check latitude and longitude bounds
-    if (request->latitude < -90.0 || request->latitude > 90.0) {
-      response->success = false;
-      response->message = "Latitude must be in [-90, 90] degrees.";
-      return;
-    }
-    if (request->longitude < -180.0 || request->longitude > 180.0) {
-      response->success = false;
-      response->message = "Longitude must be in [-180, 180] degrees.";
+      response->message = "Invalid GPS input.";
       return;
     }
     if (request->altitude < -500.0 || request->altitude > 10000.0) {
-      RCLCPP_WARN(this->get_logger(), "Unusual altitude: %f meters", request->altitude);
+      RCLCPP_WARN(this->get_logger(), "Unusual altitude: %.2f meters", request->altitude);
     }
-    double x, y, z;
+
     try {
+      double x, y, z;
       local_cartesian_->Forward(request->latitude, request->longitude, request->altitude, x, y, z);
       response->x = x;
       response->y = y;
       response->z = z;
       response->success = true;
-      response->message = "Transformation successful.";
+      response->message = "Conversion to local coordinates successful.";
     } catch (const std::exception &e) {
       response->success = false;
-      response->message = std::string("Transformation failed: ") + e.what();
+      response->message = std::string("Error during conversion: ") + e.what();
     }
   }
 
-  // Service objects
+  // === Local → WGS84 ===
+  void handle_to_ll(
+    const std::shared_ptr<geo_transformer::srv::ToLL::Request> request,
+    std::shared_ptr<geo_transformer::srv::ToLL::Response> response)
+  {
+    if (!origin_set_ || !local_cartesian_) {
+      response->success = false;
+      response->message = "Origin not set. Cannot perform conversion.";
+      return;
+    }
+
+    try {
+      double lat, lon, alt;
+      local_cartesian_->Reverse(request->x, request->y, request->z, lat, lon, alt);
+      response->latitude = lat;
+      response->longitude = lon;
+      response->altitude = alt;
+      response->success = true;
+      response->message = "Conversion to GPS successful.";
+    } catch (const std::exception &e) {
+      response->success = false;
+      response->message = std::string("Error during conversion: ") + e.what();
+    }
+  }
+
+  // === Internal State ===
+  bool origin_set_;
+  double origin_lat_, origin_lon_, origin_alt_;
+  std::unique_ptr<GeographicLib::LocalCartesian> local_cartesian_;
+
+  // === Service Handles ===
   rclcpp::Service<geo_transformer::srv::SetOrigin>::SharedPtr set_origin_service_;
   rclcpp::Service<geo_transformer::srv::GetOrigin>::SharedPtr get_origin_service_;
   rclcpp::Service<geo_transformer::srv::FromLL>::SharedPtr from_ll_service_;
   rclcpp::Service<geo_transformer::srv::ToLL>::SharedPtr to_ll_service_;
-  // State for the origin and transformation
-  bool origin_set_;
-  double origin_lat_, origin_lon_, origin_alt_;
-  std::unique_ptr<GeographicLib::LocalCartesian> local_cartesian_;
 };
 
-// Main entry point
-int main(int argc, char **argv) {
+// === Entry point ===
+int main(int argc, char **argv)
+{
   rclcpp::init(argc, argv);
   rclcpp::spin(std::make_shared<GeoTransformationNode>());
   rclcpp::shutdown();

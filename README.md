@@ -53,12 +53,7 @@ ros2 run geo_transformer geo_transformer_node
 ---
 
 ## Testing with the Provided Python Script (Terminal 3)
-1. Open **Terminal 3** and install Python dependencies (only needed once):
-   ```bash
-   cd /home/sahil/Desktop/The_assignment/asg_ws
-   pip install -r scripts/requirements.txt
-   ```
-2. Source your workspace:
+1. Open **Terminal 3**  and source your workspace:
    ```bash
    source install/setup.bash
    ```
@@ -84,6 +79,18 @@ Once launched, this node exposes 4 ROS2 services which can be called from:
 
 The service interface is decoupled and clean — no custom dependencies, so it plugs easily into mapping, localization, or robot control pipelines.
 
+## Notes
+- Make sure the node is running before calling the services.
+- You can check available services with:
+  ```bash
+  ros2 service list
+  ```
+- You can inspect the service types with:
+  ```bash
+  ros2 interface show geo_transformer/srv/FromLL
+  ros2 interface show geo_transformer/srv/ToLL
+  ros2 interface show geo_transformer/srv/SetOrigin
+  ros2 interface show geo_transformer/srv/GetOrigin
 
 ## ###############################################################################
 ## Calling Services Manually (Any Terminal)
@@ -139,16 +146,5 @@ success: true
 message: "Transformation successful."
 ```
 
-## Notes
-- Make sure the node is running before calling the services.
-- You can check available services with:
-  ```bash
-  ros2 service list
-  ```
-- You can inspect the service types with:
-  ```bash
-  ros2 interface show geo_transformer/srv/FromLL
-  ros2 interface show geo_transformer/srv/ToLL
-  ros2 interface show geo_transformer/srv/SetOrigin
-  ros2 interface show geo_transformer/srv/GetOrigin
+
   ```
