@@ -3,7 +3,13 @@ import rclpy
 from rclpy.node import Node
 from geo_transformer.srv import SetOrigin, GetOrigin, FromLL, ToLL
 
+from geometry_msgs.msg import Point
+
 class ServiceTester(Node):
+    def __init__(self):
+        super().__init__('geo_service_tester')
+        self.origin = [28.6139, 77.2090, 0.0]  # India Gate
+        self.test_point = [28.6145, 77.2105, 0.0]  # Nearby point
     def __init__(self):
         super().__init__('geo_service_tester')
         self.origin = [28.6139, 77.2090, 0.0]  # India Gate
@@ -20,6 +26,10 @@ class ServiceTester(Node):
         self.switch_origin_client = self.create_client(SwitchOrigin, '/origin_store/switch_origin')
         self.list_origins_client = self.create_client(ListOrigins, '/origin_store/list_origins')
         self.get_current_origin_name_client = self.create_client(GetCurrentOriginName, '/origin_store/get_current_origin_name')
+
+        # Visualization publishers
+        self.point_pub = self.create_publisher(Point, '/geo_transformer/visualize_point', 10)
+        self.origin_pub = self.create_publisher(Point, '/geo_transformer/origin', 10)
 
         self.timer = self.create_timer(1.0, self.run_sequence)
 
@@ -108,16 +118,19 @@ class ServiceTester(Node):
         print("[FromLL] Waiting for service (single point)...")
         self.from_ll_client.wait_for_service()
         req = FromLL.Request()
-        req.latitude = [self.test_point[0]]
-        req.longitude = [self.test_point[1]]
-        req.altitude = [self.test_point[2]]
+        # Set test point to be 1 meter east of origin (approx, for small distances)
+        # 1 deg longitude ~ 111320 m at equator, so delta_lon = 1/111320
+        delta = 1.0 / 111320.0
+        req.latitude = [self.origin[0]]
+        req.longitude = [self.origin[1] + delta]
+        req.altitude = [self.origin[2]]
         self.from_ll_client.call_async(req).add_done_callback(lambda f: self.on_from_ll(f, origin_name, origin_res))
 
-        # Batch test: 3 points
+        # Batch test: 3 points, spaced ~1m in x, y, z
         self.batch_points = [
-            [28.6145, 77.2105, 0.0],
-            [28.6150, 77.2110, 10.0],
-            [28.6160, 77.2120, 20.0]
+            [self.origin[0], self.origin[1] + delta, self.origin[2]],  # ~1m east
+            [self.origin[0] + delta, self.origin[1], self.origin[2]],  # ~1m north
+            [self.origin[0], self.origin[1], self.origin[2] + 1.0]     # 1m up
         ]
         batch_req = FromLL.Request()
         batch_req.latitude = [p[0] for p in self.batch_points]
@@ -130,6 +143,14 @@ class ServiceTester(Node):
         # Print current origin info
         print(f"[FromLL] (Current Origin: name='{origin_name}', lat={origin_res.latitude}, lon={origin_res.longitude}, alt={origin_res.altitude})")
         print(f"[FromLL] x={res.x[0]}, y={res.y[0]}, z={res.z[0]}")
+        # Publish the point for visualization
+        pt = Point()
+        pt.x, pt.y, pt.z = res.x[0], res.y[0], res.z[0]
+        self.point_pub.publish(pt)
+        # Publish the origin for visualization
+        origin_pt = Point()
+        origin_pt.x, origin_pt.y, origin_pt.z = 0.0, 0.0, 0.0  # Origin is always (0,0,0) in local frame
+        self.origin_pub.publish(origin_pt)
 
         print("[ToLL] Waiting for service (single point)...")
         self.to_ll_client.wait_for_service()
