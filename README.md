@@ -1,8 +1,20 @@
 # geo_transformer ROS 2 Package
 
 ## Overview
-This package provides ROS 2 services for transforming geodetic coordinates (latitude, longitude, altitude) to local coordinates (x, y, z) and vice versa.
-This package uses [GeographicLib](https://geographiclib.sourceforge.io/) for geodetic ↔ local coordinate conversions.
+**Features:**
+- ROS 2 C++ node for coordinate transformations between WGS84 (latitude, longitude, altitude) and local Cartesian (x, y, z) frames
+- Uses [GeographicLib](https://geographiclib.sourceforge.io/) for accurate geodetic ↔ local conversions
+- Service-based interface for all transformations (easy integration with other ROS 2 nodes)
+- Batch (array) support for both FromLL and ToLL services (convert multiple points in one call)
+- Robust error handling and input validation
+- Named origin management: add, switch, list, and query multiple named origins
+- Returns current origin info in all service responses
+- Python test script for end-to-end service and round-trip accuracy testing
+- Visualization: publishes geometry_msgs/Point for transformed points and origin
+- Python visualization node: displays points and origin as RViz markers with labels
+- All points and origin are visualized in RViz with persistent markers
+- Launch file for easy startup
+
 
 
 ## Prerequisites
@@ -73,7 +85,27 @@ ros2 run geo_transformer geo_transformer_node
    - Convert back to WGS84
 
 ---
+## Running the Visualization Node (Terminal 4)
+To visualize the transformed points and origin in RViz:
+1. Open **Terminal 4** and source your workspace:
+   ```bash
+   source install/setup.bash
+   ```
+2. Run the visualization node:
+   ```bash
+   python3 geo_transformer/scripts/visualize_points.py
+   ```
+3. Start RViz in another terminal (if not already running):
+   ```bash
+   rviz2
+   ```
+4. In RViz:
+   - Set the Fixed Frame to `odom`.
+   - Add a `MarkerArray` display and set the topic to `/geo_transformer/markers`.
+   - Add a `Grid` and `Axes` display for reference.
+   - Use the selection tool to inspect marker coordinates.
 
+The origin will appear as a red sphere labeled "Origin". Transformed points will appear as green spheres with labels (P0, P1, ...), spaced ~1m apart in x, y, z from the origin.
 
 ### Integration with Other Nodes
 
@@ -209,14 +241,6 @@ You can visualize the transformed points and the origin in RViz using the provid
    - Use the selection tool to inspect marker coordinates.
 
 The origin will appear as a red sphere labeled "Origin". Transformed points will appear as green spheres with labels (P0, P1, ...), spaced ~1m apart in x, y, z from the origin.
-
-### Node Graph
-
-To see the ROS 2 node and topic graph, run:
-```bash
-ros2 run rqt_graph rqt_graph
-```
-This will show all nodes and their topic connections, including services and publishers/subscribers.
 
 ## Notes
 - Make sure the node is running before calling the services.
