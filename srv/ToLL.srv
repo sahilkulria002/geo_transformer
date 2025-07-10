@@ -1,12 +1,12 @@
 
-# Request: Convert local coordinates to WGS84
-float64 x          # X in meters
-float64 y          # Y in meters
-float64 z          # Z in meters
+## Request: Convert one or more local coordinates to WGS84
+float64[] x          # X in meters
+float64[] y          # Y in meters
+float64[] z          # Z in meters
 ---
 # Response: WGS84 coordinates
-float64 latitude   # Latitude in degrees
-float64 longitude  # Longitude in degrees
-float64 altitude   # Altitude in meters
-bool success       # True if conversion succeeded
-string message     # Status or error message
+float64[] latitude   # Latitudes in degrees
+float64[] longitude  # Longitudes in degrees
+float64[] altitude   # Altitudes in meters
+bool success         # True if all conversions succeeded
+string message       # Status or error message

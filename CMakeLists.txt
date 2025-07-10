@@ -44,9 +44,13 @@ ament_target_dependencies(geo_transformer_node
 
 target_link_libraries(geo_transformer_node ${GEOGRAPHICLIB_LIBRARIES})
 
-rosidl_target_interfaces(geo_transformer_node
+rosidl_get_typesupport_target(cpp_typesupport_target
   ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
+target_link_libraries(geo_transformer_node
+  ${GEOGRAPHICLIB_LIBRARIES}
+  ${cpp_typesupport_target}
+)
 
 install(TARGETS geo_transformer_node
   DESTINATION lib/${PROJECT_NAME}

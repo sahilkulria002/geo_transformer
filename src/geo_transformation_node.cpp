@@ -121,7 +121,7 @@ public:
     response->success = true;
     response->message = "Origin retrieved successfully.";
   }
-  // Handler for /to_ll service: converts local (x, y, z) to WGS84 (lat, lon, alt)
+  // Handler for /to_ll service: converts local (x, y, z) arrays to WGS84 (lat, lon, alt) arrays
   void handle_to_ll(const std::shared_ptr<geo_transformer::srv::ToLL::Request> request,
                     std::shared_ptr<geo_transformer::srv::ToLL::Response> response) {
     if (!origin_set_ || !local_cartesian_) {
@@ -129,18 +129,36 @@ public:
       response->message = "Origin not set. Please call set_origin first.";
       return;
     }
-    double lat, lon, alt;
-    try {
-      local_cartesian_->Reverse(request->x, request->y, request->z, lat, lon, alt);
-      response->latitude = lat;
-      response->longitude = lon;
-      response->altitude = alt;
-      response->success = true;
-      response->message = "Transformation successful.";
-    } catch (const std::exception &e) {
+    size_t n = request->x.size();
+    if (request->y.size() != n || request->z.size() != n) {
       response->success = false;
-      response->message = std::string("Transformation failed: ") + e.what();
+      response->message = "Input arrays x, y, z must have the same length.";
+      return;
     }
+    response->latitude.clear();
+    response->longitude.clear();
+    response->altitude.clear();
+    bool all_success = true;
+    std::string error_msgs;
+    for (size_t i = 0; i < n; ++i) {
+      double lat, lon, alt;
+      try {
+        local_cartesian_->Reverse(request->x[i], request->y[i], request->z[i], lat, lon, alt);
+        response->latitude.push_back(lat);
+        response->longitude.push_back(lon);
+        response->altitude.push_back(alt);
+      } catch (const std::exception &e) {
+        all_success = false;
+        response->latitude.push_back(0.0);
+        response->longitude.push_back(0.0);
+        response->altitude.push_back(0.0);
+        error_msgs += "Index " + std::to_string(i) + ": " + e.what() + "; ";
+      }
+    }
+    response->success = all_success;
+    // Add current origin info to message
+    response->message = (all_success ? "All transformations successful." : ("Some transformations failed: " + error_msgs)) +
+      " | Origin name: '" + current_origin_name_ + "', lat: " + std::to_string(origin_lat_) + ", lon: " + std::to_string(origin_lon_) + ", alt: " + std::to_string(origin_alt_);
   }
 
 private:
@@ -158,7 +176,7 @@ private:
       std::to_string(origin_lon_) + ", " + std::to_string(origin_alt_);
   }
 
-  // Handler for /from_ll service: converts WGS84 (lat, lon, alt) to local (x, y, z)
+  // Handler for /from_ll service: converts arrays of WGS84 (lat, lon, alt) to local (x, y, z)
   void handle_from_ll(const std::shared_ptr<geo_transformer::srv::FromLL::Request> request,
                       std::shared_ptr<geo_transformer::srv::FromLL::Response> response) {
     if (!origin_set_ || !local_cartesian_) {
@@ -166,18 +184,36 @@ private:
       response->message = "Origin not set. Please call set_origin first.";
       return;
     }
-    double x, y, z;
-    try {
-      local_cartesian_->Forward(request->latitude, request->longitude, request->altitude, x, y, z);
-      response->x = x;
-      response->y = y;
-      response->z = z;
-      response->success = true;
-      response->message = "Transformation successful.";
-    } catch (const std::exception &e) {
+    size_t n = request->latitude.size();
+    if (request->longitude.size() != n || request->altitude.size() != n) {
       response->success = false;
-      response->message = std::string("Transformation failed: ") + e.what();
+      response->message = "Input arrays latitude, longitude, altitude must have the same length.";
+      return;
     }
+    response->x.clear();
+    response->y.clear();
+    response->z.clear();
+    bool all_success = true;
+    std::string error_msgs;
+    for (size_t i = 0; i < n; ++i) {
+      double x, y, z;
+      try {
+        local_cartesian_->Forward(request->latitude[i], request->longitude[i], request->altitude[i], x, y, z);
+        response->x.push_back(x);
+        response->y.push_back(y);
+        response->z.push_back(z);
+      } catch (const std::exception &e) {
+        all_success = false;
+        response->x.push_back(0.0);
+        response->y.push_back(0.0);
+        response->z.push_back(0.0);
+        error_msgs += "Index " + std::to_string(i) + ": " + e.what() + "; ";
+      }
+    }
+    response->success = all_success;
+    // Add current origin info to message
+    response->message = (all_success ? "All transformations successful." : ("Some transformations failed: " + error_msgs)) +
+      " | Origin name: '" + current_origin_name_ + "', lat: " + std::to_string(origin_lat_) + ", lon: " + std::to_string(origin_lon_) + ", alt: " + std::to_string(origin_alt_);
   }
 
   // Service objects
