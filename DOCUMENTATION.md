@@ -33,6 +33,14 @@
 ---
 
 
+## validity proof - 
+**this package** - 
+'Origin set to (40.000000, -70.000000, 0.000000)'
+Request(latitude=40.0, longitude=-74.0, altitude=0.0) --> Response(x=-341298.0292421531, y=7660.993295452623, z=-9130.016282695811
+**https://tool-online.com/en/coordinate-converter.php**
+origin - x = -4675243.087, y = 6656955.494
+point -  x = -4964480.795, y = 7023419.246
+
 ## ###########################################################
 # Technical Implementation Details
 
